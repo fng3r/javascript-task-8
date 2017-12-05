@@ -1,7 +1,7 @@
 'use strict';
 
 module.exports.execute = execute;
-module.exports.isStar = true;
+module.exports.isStar = false;
 
 const PROTOCOL = 'http';
 const DEFAULT_HOST = 'localhost';
