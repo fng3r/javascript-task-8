@@ -15,8 +15,7 @@ app.get('/messages', (req, res) => {
         (!query.to || message.to === query.to)
     );
 
-    res.setHeader('Content-Type', 'application/json');
-    res.end(JSON.stringify(result));
+    res.json(result).end();
 });
 
 app.post('/messages', (req, res) => {
@@ -27,8 +26,7 @@ app.post('/messages', (req, res) => {
     };
     messages.push(message);
 
-    res.setHeader('Content-Type', 'application/json');
-    res.end(JSON.stringify(message));
+    res.json(message).end();
 });
 
 module.exports = app;
