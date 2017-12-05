@@ -1,71 +1,39 @@
 'use strict';
 
 module.exports.execute = execute;
-module.exports.isStar = false;
+module.exports.isStar = true;
 
 const PROTOCOL = 'http';
 const DEFAULT_HOST = 'localhost';
 const DEFAULT_PORT = 8080;
+const BASE_PATH = 'messages/';
 
 const argparse = require('argparse');
 const got = require('got');
 const { format: formatUrl } = require('url');
-const chalk = require('chalk');
-
-const colors = {
-    red: chalk.hex('#f00'),
-    green: chalk.hex('#0f0')
-};
+const { formatMessage } = require('./message-formatter.js');
 
 const parser = createParser();
-
-function createUrl(path, query) {
-    return formatUrl({
-        protocol: PROTOCOL,
-        hostname: DEFAULT_HOST,
-        port: DEFAULT_PORT,
-        pathname: path,
-        query
-    });
-}
+const commandFunctions = {
+    'list': listCommand,
+    'send': sendCommand,
+    'edit': editCommand,
+    'delete': deleteCommand
+};
 
 function execute() {
     const args = parser.parseArgs(process.argv.slice(2));
-    const command = args.command;
     const query = createQueryFrom(args);
-    const url = createUrl('messages', query);
-
-    if (command === 'send') {
-        return send(url, args.text);
-    } else if (command === 'list') {
-        return list(url);
-    }
-}
-
-function list(url) {
-    return got(url, { method: 'get', json: true })
-        .then(res => res.body
-            .map(formatMessage)
-            .join('\n\n')
-        );
-}
-
-function send(url, text) {
-    return got(url, {
-        method: 'post',
+    const { id, text, verbose } = args;
+    const params = {
+        query,
+        path: id,
         body: { text },
-        json: true
-    }).then(res => formatMessage(res.body));
-}
+        verbose
+    };
+    const command = args.command;
 
-function formatMessage(message) {
-    return formatMessageField('FROM', message.from, colors.red) +
-           formatMessageField('TO', message.to, colors.red) +
-           formatMessageField('TEXT', message.text, colors.green, '');
-}
-
-function formatMessageField(name, value, formatter, lineEnd = '\n') {
-    return value ? `${formatter(name)}: ${value}${lineEnd}` : '';
+    return commandFunctions[command](params);
 }
 
 function createQueryFrom(args) {
@@ -82,24 +50,58 @@ function createQueryFrom(args) {
     return query;
 }
 
+function listCommand(params) {
+    return sendRequest(params)
+        .then(res => res.body.map(m => formatMessage(m, params.verbose)).join('\n\n'));
+}
+
+function sendCommand(params) {
+    return sendRequest(params, 'post')
+        .then(res => formatMessage(res.body, params.verbose));
+}
+
+function editCommand(params) {
+    return sendRequest(params, 'patch')
+        .then(res => formatMessage(res.body, params.verbose));
+}
+
+function deleteCommand(params) {
+    return sendRequest(params, 'delete')
+        .then(res => {
+            if (res.body && res.body.status === 'ok') {
+                return 'DELETED';
+            }
+        });
+}
+
+function sendRequest({ path, query, body }, method = 'get') {
+    const url = formatUrl({
+        protocol: PROTOCOL,
+        hostname: DEFAULT_HOST,
+        port: DEFAULT_PORT,
+        pathname: BASE_PATH + path,
+        query
+    });
+
+    return got(url, { method, body, json: true });
+}
+
 function createParser() {
     const argparser = new argparse.ArgumentParser();
 
     argparser.addArgument('command', {
         help: 'command name',
-        choices: ['send', 'list']
+        choices: ['send', 'list', 'delete', 'edit']
     });
 
-    argparser.addArgument('--from', {
-        help: 'message sender'
-    });
-
-    argparser.addArgument('--to', {
-        help: 'message recipient'
-    });
-
-    argparser.addArgument(['--text'], {
-        help: 'message text'
+    argparser.addArgument('--from', { help: 'message sender' });
+    argparser.addArgument('--to', { help: 'message recipient' });
+    argparser.addArgument('--text', { help: 'message text', defaultValue: '' });
+    argparser.addArgument('--id', { help: 'message id', defaultValue: '' });
+    argparser.addArgument('-v', {
+        help: 'show message id',
+        action: 'storeTrue',
+        dest: 'verbose'
     });
 
     return argparser;
