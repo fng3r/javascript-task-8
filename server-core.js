@@ -20,6 +20,10 @@ app.get('/messages', (req, res) => {
 });
 
 app.post('/messages', (req, res) => {
+    if (!req.body.text) {
+        return res.sendStatus(400);
+    }
+
     const message = {
         id: shortid.generate(),
         from: req.query.from,
@@ -45,6 +49,10 @@ app.patch('/messages/:id', (req, res) => {
     const message = messages[req.params.id];
     if (!message) {
         return res.sendStatus(404);
+    }
+
+    if (!req.body.text) {
+        return res.sendStatus(400);
     }
 
     message.text = req.body.text;
