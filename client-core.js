@@ -99,7 +99,7 @@ function createParser() {
     argparser.addArgument('--text', { help: 'message text', defaultValue: '' });
     argparser.addArgument('--id', { help: 'message id', defaultValue: '' });
     argparser.addArgument('-v', {
-        help: 'show message id',
+        help: 'show message details',
         action: 'storeTrue',
         dest: 'verbose'
     });
