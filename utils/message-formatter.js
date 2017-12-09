@@ -10,24 +10,15 @@ const colors = {
 };
 
 module.exports.formatMessage = (message, verbose = false) => {
-    let result = '';
-    if (verbose) {
-        result += formatMessageField('ID', message.id, colors.yellow);
-    }
-
-    result +=
-        formatMessageField('FROM', message.from, colors.red) +
-        formatMessageField('TO', message.to, colors.red) +
-        formatMessageField('TEXT', message.text, colors.green, '') +
-        `${message.edited ? colors.grey('(edited)') : ''}`;
-
-    return result;
+    return [
+        verbose ? formatMessageField('ID', message.id, colors.yellow) : '',
+        formatMessageField('FROM', message.from, colors.red),
+        formatMessageField('TO', message.to, colors.red),
+        formatMessageField('TEXT', message.text, colors.green, ''),
+        `${message.edited ? colors.grey('(edited)') : ''}`
+    ].join('');
 };
 
 function formatMessageField(name, value, nameFormatter, lineEnding = '\n') {
-    if (!value) {
-        return '';
-    }
-
-    return `${nameFormatter(name)}: ${value}${lineEnding}`;
+    return value ? `${nameFormatter(name)}: ${value}${lineEnding}` : '';
 }

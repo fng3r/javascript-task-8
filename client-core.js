@@ -31,21 +31,17 @@ function execute() {
     };
     const command = args.command;
 
-    return executor.execute(command, params);
+    return executor.execute(command, params).catch(err => `${err.name}: ${err.message}`);
 }
 
 function createQueryFrom(args) {
-    const query = {};
+    return ['from', 'to']
+        .filter(property => args[property])
+        .reduce((query, property) => {
+            query[property] = args[property];
 
-    if (args.from) {
-        query.from = args.from;
-    }
-
-    if (args.to) {
-        query.to = args.to;
-    }
-
-    return query;
+            return query;
+        }, {});
 }
 
 function createParser() {

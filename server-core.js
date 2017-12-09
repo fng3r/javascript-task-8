@@ -10,7 +10,7 @@ const messages = Object.create(null);
 app.use(bodyParser.json());
 
 app.get('/messages', (req, res) => {
-    const query = req.query;
+    const { query } = req;
     const result = Object.values(messages).filter(message =>
         (!query.from || message.from === query.from) &&
         (!query.to || message.to === query.to)
